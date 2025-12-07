@@ -6,6 +6,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -29,6 +30,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Eco
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -55,6 +57,7 @@ import com.mtovar.rutaslocalesia.model.ChatMessage
 import com.mtovar.rutaslocalesia.model.Ruta
 import com.mtovar.rutaslocalesia.ui.components.RutaCard
 import com.mtovar.rutaslocalesia.ui.detail.RouteDetailScreen
+import com.mtovar.rutaslocalesia.ui.favoritos.FavoritosScreen
 import com.mtovar.rutaslocalesia.ui.map.MapViewContainer
 
 @Composable
@@ -67,6 +70,28 @@ fun ChatScreen(
     val rutas by viewModel.rutasEncontradas.collectAsState()
     // NUEVO ESTADO: Ruta seleccionada
     var selectedRuta by remember { mutableStateOf<Ruta?>(null) }
+
+    val favoritos by viewModel.misFavoritos.collectAsState() // <--- OBSERVAMOS FAVORITOS
+
+    // Estado para controlar la navegación manual (como hiciste con el detalle)
+    var showFavoritos by remember { mutableStateOf(false) }
+    // 1. INTERCEPTAMOS LA VISTA: Si showFavoritos es true, mostramos esa pantalla
+    if (showFavoritos) {
+        FavoritosScreen(
+            rutasFavoritas = favoritos,
+            onBack = { showFavoritos = false },
+            onItemClick = { rutaSeleccionada ->
+                // ¡AQUÍ ESTÁ LA SOLUCIÓN DE NAVEGACIÓN!
+                selectedRuta = rutaSeleccionada // 1. Guardamos la ruta para ver detalle
+                showFavoritos = false           // 2. Cerramos favoritos para ver el detalle
+            },
+            onDeleteClick = { rutaParaBorrar ->
+                // Conectamos el borrado
+                viewModel.eliminarRutaFavorita(rutaParaBorrar)
+            }
+        )
+        return
+    }
     // Si hay una ruta seleccionada, mostramos el detalle ocupando toda la pantalla
     if (selectedRuta != null) {
         RouteDetailScreen(
@@ -99,17 +124,26 @@ fun ChatScreen(
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Filled.Eco, contentDescription = null, tint = Color.White)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        "Asistente Rutas IA",
-                        color = Color.White,
-                        style = MaterialTheme.typography.titleLarge
-                    )
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween // Separa título e icono
+                ) {
+                    // Título e Icono Eco
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Filled.Eco, contentDescription = null, tint = Color.White)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Eco IA", color = Color.White, style = MaterialTheme.typography.titleLarge)
+                    }
+
+                    // BOTÓN CORAZÓN (NUEVO)
+                    IconButton(onClick = { showFavoritos = true }) {
+                        Icon(Icons.Filled.Favorite, contentDescription = "Ver Favoritos", tint = Color.White)
+                    }
                 }
             }
         }
+
     ) { padding ->
         Column(
             modifier = Modifier

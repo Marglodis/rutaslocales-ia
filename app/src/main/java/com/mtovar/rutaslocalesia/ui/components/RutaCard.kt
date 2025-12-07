@@ -18,11 +18,12 @@ import com.mtovar.rutaslocalesia.model.Ruta
 @Composable
 fun RutaCard(
     ruta: Ruta,
+    isFavoriteInitial: Boolean = false, // <--- Nuevo parámetro
     onFavoriteClick: (Ruta) -> Unit,
     onItemClick: (Ruta) -> Unit, // Para ver detalles
     modifier: Modifier = Modifier
 ) {
-    var isFavorite by remember { mutableStateOf(false) }
+    var isFavorite by remember { mutableStateOf(isFavoriteInitial) }
 
     Card(
         modifier = modifier

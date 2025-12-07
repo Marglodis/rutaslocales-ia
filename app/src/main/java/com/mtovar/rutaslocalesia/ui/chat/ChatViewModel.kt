@@ -9,19 +9,33 @@ import com.mtovar.rutaslocalesia.model.ChatMessage
 import com.mtovar.rutaslocalesia.model.RespuestaRutas
 import com.mtovar.rutaslocalesia.model.Ruta
 import com.mtovar.rutaslocalesia.model.entity.toEntity
+import com.mtovar.rutaslocalesia.model.entity.toRuta
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import javax.inject.Inject
+import kotlin.collections.emptyList
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
     private val generativeModel: GenerativeModel,
     private val rutasDao: RutasDao
 ) : ViewModel() {
-
+    // 1. Convertimos la lista de la DB a lista de objetos UI en tiempo real
+    val misFavoritos = rutasDao.obtenerTodas()
+        .map { listaFavoritas ->
+            listaFavoritas.map { it.toRuta() }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
     private val _rutasEncontradas = MutableStateFlow<List<Ruta>>(emptyList())
     val rutasEncontradas = _rutasEncontradas.asStateFlow()
 
@@ -171,5 +185,12 @@ class ChatViewModel @Inject constructor(
             return text.substring(startIndex, endIndex + 1)
         }
         return "{}"
+    }
+
+    fun eliminarRutaFavorita(ruta: Ruta) {
+        viewModelScope.launch {
+            rutasDao.eliminarPorNombre(ruta.nombre)
+            // Como usamos Flow, la lista se actualizará sola en la UI
+        }
     }
 }

@@ -19,4 +19,7 @@ interface RutasDao {
 
     @Delete
     suspend fun eliminarRuta(ruta: RutaFavorita)
+
+    @Query("DELETE FROM rutas_favoritas WHERE nombre = :nombreRuta")
+    suspend fun eliminarPorNombre(nombreRuta: String)
 }

@@ -20,3 +20,20 @@ fun Ruta.toEntity() = RutaFavorita(
     latitud = this.latitud,
     longitud = this.longitud
 )
+
+// Función de extensión: Convierte la entidad de la DB al objeto que usa la UI
+fun RutaFavorita.toRuta(): Ruta {
+    return Ruta(
+        nombre = this.nombre,
+        descripcion = this.descripcion,
+        latitud = this.latitud,
+        longitud = this.longitud,
+        // Si el objeto Ruta tiene campos extra que se guardó (como rating),
+        // se da un valor por defecto aquí:
+        dificultad = "Guardada",
+        duracion = "-",
+        rating = 5.0,
+        tags = emptyList(),
+        keywordImagen = "nature"
+    )
+}
