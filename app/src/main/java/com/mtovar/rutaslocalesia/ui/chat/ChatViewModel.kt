@@ -34,7 +34,10 @@ class ChatViewModel @Inject constructor(
     init {
         // Mensaje de bienvenida
         _messages.value = listOf(
-            ChatMessage(text = "¡Hola! Soy Eco 🌿. ¿Qué tipo de aventura buscas hoy? (Tranquila, ejercicio, con perro...)", isUser = false)
+            ChatMessage(
+                text = "¡Hola! Soy Eco 🌿. ¿Qué tipo de aventura buscas hoy? (Tranquila, ejercicio, con perro...)",
+                isUser = false
+            )
         )
     }
 
@@ -49,12 +52,27 @@ class ChatViewModel @Inject constructor(
 
             try {
                 val promptMejorado = """
-            El usuario dice: "$userText".
-            Si pide rutas, responde como Eco y añade al final:
-            ```json
-            { "rutas": [ { "nombre": "...", "descripcion": "...", "latitud": 0.0, "longitud": 0.0 } ] }
-            ```
-            Si no, solo texto.
+                El usuario dice: "$userText".
+                
+                Si pide recomendaciones:
+                1. Responde amablemente como Eco (texto normal, motivador).
+                2. AL FINAL, añade un JSON ESTRICTO con esta estructura exacta para CADA ruta recomendada:
+                {
+                  "rutas": [
+                    { 
+                      "nombre": "Nombre de la ruta", 
+                      "descripcion": "Descripción evocadora y detallada...", 
+                      "latitud": -33.4, 
+                      "longitud": -70.6,
+                      "dificultad": "Media",
+                      "duracion": "45 min",
+                      "rating": 4.8,
+                      "tags": ["Sombra", "Vistas", "Río"],
+                      "keywordImagen": "forest" 
+                    }
+                  ]
+                }
+                NOTA: "keywordImagen" debe ser una sola palabra en inglés que represente el lugar visualmente (ej: river, park, mountain, trail).
             """.trimIndent()
 
                 val response = chat.sendMessage(promptMejorado)
@@ -102,6 +120,7 @@ class ChatViewModel @Inject constructor(
             }
         }
     }
+
     // Función auxiliar para limpiar el JSON que a veces Gemini envuelve en markdown
     fun extractJson(text: String): String {
         // 1. Intentar encontrar el bloque de código Markdown primero (Más seguro)

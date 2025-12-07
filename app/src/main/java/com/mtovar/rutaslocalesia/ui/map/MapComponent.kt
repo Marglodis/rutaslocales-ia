@@ -13,7 +13,9 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import com.mtovar.rutaslocalesia.model.Ruta
 
 @Composable
-fun MapViewContainer(rutas: List<Ruta>) {
+fun MapViewContainer(rutas: List<Ruta>,
+                     onMarkerClick: (Ruta) -> Unit
+                     ) {
     // Si no hay rutas, centramos en un punto default (ej: Santiago de Chile)
     // En una app real, se usaría la ubicación del usuario.
     val startLocation = if (rutas.isNotEmpty()) {
@@ -40,10 +42,19 @@ fun MapViewContainer(rutas: List<Ruta>) {
         cameraPositionState = cameraPositionState
     ) {
         rutas.forEach { ruta ->
-            Marker(
+            /*Marker(
                 state = MarkerState(position = LatLng(ruta.latitud, ruta.longitud)),
                 title = ruta.nombre,
                 snippet = ruta.descripcion
+            )*/
+            Marker(
+                state = MarkerState(position = LatLng(ruta.latitud, ruta.longitud)),
+                title = ruta.nombre,
+                // Al hacer clic, notificamos al padre y devolvemos true para consumir el evento
+                onClick = {
+                    onMarkerClick(ruta)
+                    true
+                }
             )
         }
     }

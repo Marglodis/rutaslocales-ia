@@ -28,6 +28,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.mtovar.rutaslocalesia.model.ChatMessage
+import com.mtovar.rutaslocalesia.model.Ruta
+import com.mtovar.rutaslocalesia.ui.detail.RouteDetailScreen
 import com.mtovar.rutaslocalesia.ui.map.MapViewContainer
 
 @Composable
@@ -38,7 +40,18 @@ fun ChatScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     // Observamos las rutas encontradas
     val rutas by viewModel.rutasEncontradas.collectAsState()
-
+// NUEVO ESTADO: Ruta seleccionada
+    var selectedRuta by remember { mutableStateOf<Ruta?>(null) }
+    // Si hay una ruta seleccionada, mostramos el detalle ocupando toda la pantalla
+    // Esto actúa como una "navegación" simple sin configurar NavHost complejo aún
+    if (selectedRuta != null) {
+        RouteDetailScreen(
+            ruta = selectedRuta!!,
+            onBack = { selectedRuta = null } // Al volver, limpiamos la selección
+        )
+        // Usamos return para no renderizar el chat debajo
+        return
+    }
     val listState = rememberLazyListState()
 
     // Scroll automático al último mensaje
@@ -81,7 +94,11 @@ fun ChatScreen(
                         .height(300.dp) // Altura del mapa
                         .clip(RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp))
                 ) {
-                    MapViewContainer(rutas = rutas)
+                    MapViewContainer(rutas = rutas,
+                        onMarkerClick = { rutaClickeada ->
+                        selectedRuta = rutaClickeada // ¡Esto dispara la navegación!
+                    }
+                    )
 
                     // Botón flotante para cerrar mapa si quieres (opcional)
                     IconButton(

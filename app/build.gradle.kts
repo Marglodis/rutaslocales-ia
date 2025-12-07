@@ -90,6 +90,12 @@ dependencies {
     implementation("androidx.room:room-ktx:$roomVersion")
     kapt("androidx.room:room-compiler:$roomVersion")
 
+    // Coil (Cargador de imágenes asíncrono)
+    implementation("io.coil-kt:coil-compose:2.6.0")
+
+    // Navegación (Si no la tenías explícita, asegurémonos)
+    implementation("androidx.navigation:navigation-compose:2.7.7")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
