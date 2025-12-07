@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     id("kotlin-kapt") // Necesario para Room y Hilt
     id("com.google.dagger.hilt.android") // Plugin de Hilt
+    kotlin("plugin.serialization") version "1.9.0"
 }
 
 android {
@@ -20,15 +21,19 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
-        // API KEY de Google AI Studio (Ponla en local.properties en producción)
-
-        val properties = Properties().apply {
-            load(project.rootProject.file("local.properties").inputStream())
-        }
-        val geminiApiKey = properties.getProperty("GEMINI_API_KEY", "")
-        buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // 🔑 Cargar claves desde local.properties
+        val localProperties = Properties().apply {
+            rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+        }
+        // 🗺️ Google Maps API Key
+        val mapsApiKey = localProperties.getProperty("MAPS_API_KEY", "MISSING_MAPS_KEY")
+        manifestPlaceholders["GOOGLE_MAPS_API_KEY"] = mapsApiKey
+
+        // 🤖 Gemini API Key (¡corregido typo!)
+        val geminiApiKey = localProperties.getProperty("GEMINI_API_KEY", "")
+        buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
     }
 
     buildTypes {
@@ -67,6 +72,13 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended:1.6.3")
     // Google AI Client (Gemini)
     implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
+    // Google Maps
+    implementation("com.google.maps.android:maps-compose:4.3.0")
+    implementation("com.google.android.gms:play-services-maps:18.2.0")
+
+    // Kotlin Serialization
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+
     // Hilt (Inyección de Dependencias)
     implementation("com.google.dagger:hilt-android:2.50")
     kapt("com.google.dagger:hilt-android-compiler:2.50")

@@ -27,6 +27,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.mtovar.rutaslocalesia.model.ChatMessage
+import com.mtovar.rutaslocalesia.ui.map.MapViewContainer
 
 @Composable
 fun ChatScreen(
@@ -34,6 +36,9 @@ fun ChatScreen(
 ) {
     val messages by viewModel.messages.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    // Observamos las rutas encontradas
+    val rutas by viewModel.rutasEncontradas.collectAsState()
+
     val listState = rememberLazyListState()
 
     // Scroll automático al último mensaje
@@ -66,34 +71,46 @@ fun ChatScreen(
         }
     ) { padding ->
         Column(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-                .background(Color(0xFFF0F4F0)) // Fondo muy suave
+            modifier = Modifier.padding(padding).fillMaxSize()
         ) {
-            LazyColumn(
-                state = listState,
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 16.dp),
-                contentPadding = PaddingValues(vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(messages) { message ->
-                    MessageBubble(message)
-                }
+            // ZONA SUPERIOR: Si hay rutas, mostramos el mapa ocupando espacio
+            if (rutas.isNotEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(300.dp) // Altura del mapa
+                        .clip(RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp))
+                ) {
+                    MapViewContainer(rutas = rutas)
 
-                if (isLoading) {
-                    item {
-                        TypingIndicator()
+                    // Botón flotante para cerrar mapa si quieres (opcional)
+                    IconButton(
+                        onClick = { /* viewModel.clearRutas() - Tarea para ti */ },
+                        modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)
+                    ) {
+                        // Icono cerrar
                     }
                 }
             }
 
-            ChatInputArea(
-                onSend = { text -> viewModel.sendMessage(text) },
-                enabled = !isLoading
-            )
+            // ZONA INFERIOR: El Chat
+            Box(modifier = Modifier.weight(1f)) {
+                Column {
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier.weight(1f).padding(horizontal = 16.dp),
+                        // ... contenido del chat igual que antes ...
+                    ) {
+                        items(messages) { message -> MessageBubble(message) }
+                        if (isLoading) { item { TypingIndicator() } }
+                    }
+
+                    ChatInputArea(
+                        onSend = { viewModel.sendMessage(it) },
+                        enabled = !isLoading
+                    )
+                }
+            }
         }
     }
 }
