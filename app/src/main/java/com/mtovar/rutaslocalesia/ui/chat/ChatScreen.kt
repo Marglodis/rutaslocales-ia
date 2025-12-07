@@ -6,8 +6,20 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -17,8 +29,20 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Eco
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.mtovar.rutaslocalesia.model.ChatMessage
 import com.mtovar.rutaslocalesia.model.Ruta
+import com.mtovar.rutaslocalesia.ui.components.RutaCard
 import com.mtovar.rutaslocalesia.ui.detail.RouteDetailScreen
 import com.mtovar.rutaslocalesia.ui.map.MapViewContainer
 
@@ -40,10 +65,9 @@ fun ChatScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     // Observamos las rutas encontradas
     val rutas by viewModel.rutasEncontradas.collectAsState()
-// NUEVO ESTADO: Ruta seleccionada
+    // NUEVO ESTADO: Ruta seleccionada
     var selectedRuta by remember { mutableStateOf<Ruta?>(null) }
     // Si hay una ruta seleccionada, mostramos el detalle ocupando toda la pantalla
-    // Esto actúa como una "navegación" simple sin configurar NavHost complejo aún
     if (selectedRuta != null) {
         RouteDetailScreen(
             ruta = selectedRuta!!,
@@ -78,34 +102,62 @@ fun ChatScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Filled.Eco, contentDescription = null, tint = Color.White)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Asistente Rutas IA", color = Color.White, style = MaterialTheme.typography.titleLarge)
+                    Text(
+                        "Asistente Rutas IA",
+                        color = Color.White,
+                        style = MaterialTheme.typography.titleLarge
+                    )
                 }
             }
         }
     ) { padding ->
         Column(
-            modifier = Modifier.padding(padding).fillMaxSize()
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
         ) {
             // ZONA SUPERIOR: Si hay rutas, mostramos el mapa ocupando espacio
             if (rutas.isNotEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(300.dp) // Altura del mapa
-                        .clip(RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp))
+                Column(
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    MapViewContainer(rutas = rutas,
-                        onMarkerClick = { rutaClickeada ->
-                        selectedRuta = rutaClickeada // ¡Esto dispara la navegación!
-                    }
-                    )
-
-                    // Botón flotante para cerrar mapa si quieres (opcional)
-                    IconButton(
-                        onClick = { /* viewModel.clearRutas() - Tarea para ti */ },
-                        modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)
+                    // 1. EL MAPA
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(250.dp) // Reduje un poco la altura para que quepan las cards
+                            .clip(RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp))
                     ) {
-                        // Icono cerrar
+                        MapViewContainer(
+                            rutas = rutas,
+                            onMarkerClick = { rutaClickeada -> selectedRuta = rutaClickeada }
+                        )
+                        // Botón cerrar (opcional)
+                        IconButton(
+                            onClick = { /* Lógica para limpiar rutas */ },
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(8.dp)
+                        ) { /* Icono X */ }
+                    }
+
+                    // 2. CARRUSEL DE TARJETAS (NUEVO)
+                    // Aquí es donde el usuario guarda en Room
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
+                        items(rutas) { ruta ->
+                            RutaCard(
+                                ruta = ruta,
+                                onFavoriteClick = { rutaParaGuardar ->
+                                    // LLAMADA A ROOM:
+                                    viewModel.guardarRutaFavorita(rutaParaGuardar)
+                                },
+                                onItemClick = { rutaParaDetalle ->
+                                    selectedRuta = rutaParaDetalle
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -115,11 +167,14 @@ fun ChatScreen(
                 Column {
                     LazyColumn(
                         state = listState,
-                        modifier = Modifier.weight(1f).padding(horizontal = 16.dp),
-                        // ... contenido del chat igual que antes ...
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = 16.dp),
                     ) {
                         items(messages) { message -> MessageBubble(message) }
-                        if (isLoading) { item { TypingIndicator() } }
+                        if (isLoading) {
+                            item { TypingIndicator() }
+                        }
                     }
 
                     ChatInputArea(
@@ -135,7 +190,9 @@ fun ChatScreen(
 @Composable
 fun MessageBubble(message: ChatMessage) {
     val isUser = message.isUser
-
+// Detectamos si es un mensaje de error de Eco
+    val isError =
+        !isUser && (message.text.contains("recuperar el aliento") || message.text.contains("Error"))
     // Animación de entrada
     AnimatedVisibility(
         visible = true,
@@ -156,14 +213,18 @@ fun MessageBubble(message: ChatMessage) {
                         )
                     )
                     .background(
-                        if (isUser) Color(0xFFDCF8C6) else Color.White
+                        when {
+                            isUser -> Color(0xFFDCF8C6) // Verde Usuario
+                            isError -> Color(0xFFFFEBEE) // Rojo suave para Error
+                            else -> Color.White // Blanco normal Eco
+                        }
                     )
                     .padding(16.dp)
                     .widthIn(max = 280.dp)
             ) {
                 Text(
                     text = message.text,
-                    color = Color.Black,
+                    color = if (isError) Color(0xFFB71C1C) else Color.Black, // Texto rojo oscuro si es error
                     style = MaterialTheme.typography.bodyLarge
                 )
             }
@@ -219,7 +280,10 @@ fun ChatInputArea(onSend: (String) -> Unit, enabled: Boolean) {
             },
             enabled = enabled && text.isNotBlank(),
             modifier = Modifier
-                .background(if (enabled && text.isNotBlank()) Color(0xFF4CAF50) else Color.LightGray, CircleShape)
+                .background(
+                    if (enabled && text.isNotBlank()) Color(0xFF4CAF50) else Color.LightGray,
+                    CircleShape
+                )
                 .size(48.dp)
         ) {
             Icon(
