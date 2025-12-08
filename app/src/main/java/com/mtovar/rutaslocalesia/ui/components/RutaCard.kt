@@ -25,6 +25,11 @@ fun RutaCard(
 ) {
     var isFavorite by remember { mutableStateOf(isFavoriteInitial) }
 
+    // CORRECCIÓN: Si el valor externo (Base de Datos) cambia, actualizamos el interno
+    LaunchedEffect(isFavoriteInitial) {
+        isFavorite = isFavoriteInitial
+    }
+
     Card(
         modifier = modifier
             .width(280.dp) // Ancho fijo para el carrusel

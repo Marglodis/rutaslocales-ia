@@ -181,11 +181,19 @@ fun ChatScreen(
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
                     ) {
                         items(rutas) { ruta ->
+                            // LÓGICA MAESTRA:
+                            // Revisamos si esta ruta ya existe en la lista de favoritos (comparando por nombre)
+                            val isAlreadyFavorite = favoritos.any { it.nombre == ruta.nombre }
                             RutaCard(
                                 ruta = ruta,
-                                onFavoriteClick = { rutaParaGuardar ->
-                                    // LLAMADA A ROOM:
-                                    viewModel.guardarRutaFavorita(rutaParaGuardar)
+                                onFavoriteClick = { rutaClickeada ->
+                                    if (isAlreadyFavorite) {
+                                        // Si ya era favorita y le dan click, la BORRAMOS (Toggle)
+                                        viewModel.eliminarRutaFavorita(rutaClickeada)
+                                    } else {
+                                        // Si no, la GUARDAMOS
+                                        viewModel.guardarRutaFavorita(rutaClickeada)
+                                    }
                                 },
                                 onItemClick = { rutaParaDetalle ->
                                     selectedRuta = rutaParaDetalle
