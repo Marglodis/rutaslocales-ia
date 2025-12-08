@@ -13,5 +13,6 @@ data class Ruta(
     val duracion: String,   // Ej: "2 horas"
     val rating: Double,     // Ej: 4.8
     val tags: List<String>, // Ej: ["Río", "Sombra", "Perros"]
-    val keywordImagen: String // Una palabra clave para buscar la foto (ej: "forest", "mountain")
+    val keywordImagen: String, // Una palabra clave para buscar la foto (ej: "forest", "mountain")
+    val puntosInteres: List<PuntoInteres> = emptyList()
 )

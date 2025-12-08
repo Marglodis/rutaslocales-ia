@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import com.google.android.gms.maps.GoogleMapOptions
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
@@ -14,7 +16,9 @@ import com.mtovar.rutaslocalesia.model.Ruta
 
 @Composable
 fun MapViewContainer(rutas: List<Ruta>,
-                     onMarkerClick: (Ruta) -> Unit
+                     onMarkerClick: (Ruta) -> Unit,
+                     modifier: Modifier = Modifier,
+                     liteMode: Boolean = false
                      ) {
     // Si no hay rutas, centramos en un punto default (ej: Santiago de Chile)
     // En una app real, se usaría la ubicación del usuario.
@@ -38,24 +42,36 @@ fun MapViewContainer(rutas: List<Ruta>,
     }
 
     GoogleMap(
-        modifier = Modifier.fillMaxSize(),
-        cameraPositionState = cameraPositionState
+        modifier = modifier.fillMaxSize(),
+        cameraPositionState = cameraPositionState,
+        // ESTA ES LA CLAVE PARA EL RENDIMIENTO:
+        googleMapOptionsFactory = {
+            GoogleMapOptions().liteMode(liteMode)
+        }
     ) {
         rutas.forEach { ruta ->
-            /*Marker(
-                state = MarkerState(position = LatLng(ruta.latitud, ruta.longitud)),
-                title = ruta.nombre,
-                snippet = ruta.descripcion
-            )*/
+            // 1. MARCADOR PRINCIPAL (ROJO)
             Marker(
                 state = MarkerState(position = LatLng(ruta.latitud, ruta.longitud)),
-                title = ruta.nombre,
-                // Al hacer clic, notificamos al padre y devolvemos true para consumir el evento
+                title = "📍 ${ruta.nombre}",
+                snippet = ruta.duracion,
+                icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED),
                 onClick = {
                     onMarkerClick(ruta)
-                    true
+                    false
                 }
             )
+
+            // 2. PUNTOS DE INTERÉS (AZULES/CYAN)
+            ruta.puntosInteres.forEach { poi ->
+                Marker(
+                    state = MarkerState(position = LatLng(poi.latitud, poi.longitud)),
+                    title = poi.nombre, // Ej: "Mirador"
+                    snippet = poi.tipo.uppercase(),
+                    // Usamos un color diferente para distinguirlos
+                    icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)
+                )
+            }
         }
     }
 }

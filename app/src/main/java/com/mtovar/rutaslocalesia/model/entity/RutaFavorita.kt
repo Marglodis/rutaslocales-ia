@@ -34,6 +34,7 @@ fun RutaFavorita.toRuta(): Ruta {
         duracion = "-",
         rating = 5.0,
         tags = emptyList(),
-        keywordImagen = "nature"
+        keywordImagen = "nature",
+        puntosInteres = emptyList()
     )
 }

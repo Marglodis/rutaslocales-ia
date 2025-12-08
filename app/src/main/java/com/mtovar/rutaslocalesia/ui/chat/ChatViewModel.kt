@@ -76,20 +76,24 @@ class ChatViewModel @Inject constructor(
                 El usuario dice: "$userText".
                 
                 Si pide recomendaciones:
-                1. Responde amablemente como Eco (texto normal, motivador).
-                2. AL FINAL, añade un JSON ESTRICTO con esta estructura exacta para CADA ruta recomendada:
+                1. Responde amablemente como Eco.
+                2. AL FINAL, añade un JSON ESTRICTO con esta estructura, incluyendo 2 o 3 puntos de interés cercanos (miradores, parking, hitos):
                 {
                   "rutas": [
                     { 
-                      "nombre": "Nombre de la ruta", 
-                      "descripcion": "Descripción evocadora y detallada...", 
-                      "latitud": -33.4, 
-                      "longitud": -70.6,
+                      "nombre": "Nombre", 
+                      "descripcion": "...", 
+                      "latitud": -33.0, 
+                      "longitud": -70.0,
                       "dificultad": "Media",
-                      "duracion": "45 min",
-                      "rating": 4.8,
-                      "tags": ["Sombra", "Vistas", "Río"],
-                      "keywordImagen": "forest" 
+                      "duracion": "...",
+                      "rating": 4.5,
+                      "tags": ["..."],
+                      "keywordImagen": "mountain",
+                      "puntosInteres": [
+                         { "nombre": "Estacionamiento", "latitud": -33.01, "longitud": -70.01, "tipo": "parking" },
+                         { "nombre": "Mirador Las Águilas", "latitud": -33.02, "longitud": -70.02, "tipo": "foto" }
+                      ]
                     }
                   ]
                 }
