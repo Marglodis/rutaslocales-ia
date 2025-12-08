@@ -1,5 +1,7 @@
 package com.mtovar.rutaslocalesia.ui.detail
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,13 +20,17 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Terrain
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -55,190 +61,214 @@ fun RouteDetailScreen(
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
-    // OPTIMIZACIÓN CRÍTICA 1: "Remember" la solicitud de imagen.
-    // Esto evita que Coil intente crear la solicitud una y otra vez si hay recomposiciones.
+
+    // IMAGEN OPTIMIZADA
     val imageRequest = remember(ruta.keywordImagen) {
         ImageRequest.Builder(context)
             .data("https://picsum.photos/seed/${ruta.keywordImagen}/400/300")
             .crossfade(true)
-            .size(800, 600) // Limitamos la decodificación
-            .dispatcher(kotlinx.coroutines.Dispatchers.IO) // Forzamos IO
+            .size(800, 600)
+            .dispatcher(kotlinx.coroutines.Dispatchers.IO)
             .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
             .diskCachePolicy(coil.request.CachePolicy.ENABLED)
             .build()
     }
-    // OPTIMIZACIÓN 1: Pedimos una imagen más pequeña (400x300) para ahorrar memoria
-    // val imageUrl = "https://picsum.photos/seed/${ruta.keywordImagen}/400/300"
-    // OPTIMIZACIÓN 2: Estado para controlar cuándo cargar el mapa
+
+    // MAPA LAZY LOAD
     var showMap by remember { mutableStateOf(false) }
 
-    // Efecto de "Lazy Load": Esperamos 500ms (lo que dura la transición) antes de cargar el mapa
     LaunchedEffect(Unit) {
         delay(500)
         showMap = true
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(
+    Scaffold(
+        floatingActionButton = {
+            ExtendedFloatingActionButton(
+                onClick = {
+                    // --- LÓGICA DE NAVEGACIÓN GPS ---
+                    val gmmIntentUri = Uri.parse("google.navigation:q=${ruta.latitud},${ruta.longitud}&mode=w")
+                    val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)
+                    mapIntent.setPackage("com.google.android.apps.maps") // Intenta abrir Maps oficial
+
+                    try {
+                        context.startActivity(mapIntent)
+                    } catch (e: Exception) {
+                        // Si no tiene Maps instalado, abre el navegador web
+                        val webIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/maps/dir/?api=1&destination=${ruta.latitud},${ruta.longitud}"))
+                        context.startActivity(webIntent)
+                    }
+                },
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = Color.White,
+                icon = { Icon(Icons.Default.Navigation, contentDescription = null) },
+                text = { Text("Cómo llegar") }
+            )
+        },
+        floatingActionButtonPosition = FabPosition.Center
+    ) { paddingValues ->
+
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .background(Color.White)
+                .padding(bottom = paddingValues.calculateBottomPadding())
         ) {
-            // 1. HEADER IMAGEN
-            Box(
+            Column(
                 modifier = Modifier
-                    .height(300.dp)
-                    .fillMaxWidth()
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .background(Color.White)
             ) {
-                AsyncImage(
-                    model = imageRequest, // Usamos la request recordada
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
+                // 1. HEADER IMAGEN
                 Box(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            Brush.verticalGradient(
-                                colors = listOf(Color.Black.copy(alpha = 0.3f), Color.Transparent)
-                            )
-                        )
-                )
-            }
-
-            // 2. CONTENIDO
-            Column(modifier = Modifier.padding(24.dp)) {
-                // Título y Rating
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .height(300.dp)
+                        .fillMaxWidth()
                 ) {
-                    Text(
-                        text = ruta.nombre,
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.weight(1f)
+                    AsyncImage(
+                        model = imageRequest,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
                     )
-                    RatingBadge(ruta.rating)
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Info Chips
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    InfoChip(
-                        icon = Icons.Default.Timer,
-                        label = ruta.duracion,
-                        color = Color(0xFFE3F2FD),
-                        textColor = Color(0xFF1565C0)
-                    )
-                    InfoChip(
-                        icon = Icons.Default.Terrain,
-                        label = ruta.dificultad,
-                        color = Color(0xFFE8F5E9),
-                        textColor = Color(0xFF2E7D32)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Tags
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ruta.tags.take(3).forEach { tag ->
-                        Surface(
-                            shape = RoundedCornerShape(16.dp),
-                            color = Color(0xFFF5F5F5),
-                            modifier = Modifier.height(32.dp)
-                        ) {
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier = Modifier.padding(horizontal = 12.dp)
-                            ) {
-                                Text(
-                                    text = "#$tag",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color.Gray
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(Color.Black.copy(alpha = 0.3f), Color.Transparent)
                                 )
+                            )
+                    )
+                }
+
+                // 2. CONTENIDO
+                Column(modifier = Modifier.padding(24.dp)) {
+                    // Título y Rating
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = ruta.nombre,
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.weight(1f)
+                        )
+                        RatingBadge(ruta.rating)
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Info Chips
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        InfoChip(
+                            icon = Icons.Default.Timer,
+                            label = ruta.duracion ?: "-",
+                            color = Color(0xFFE3F2FD),
+                            textColor = Color(0xFF1565C0)
+                        )
+                        InfoChip(
+                            icon = Icons.Default.Terrain,
+                            label = ruta.dificultad ?: "-",
+                            color = Color(0xFFE8F5E9),
+                            textColor = Color(0xFF2E7D32)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Tags
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        ruta.tags.take(3).forEach { tag ->
+                            Surface(
+                                shape = RoundedCornerShape(16.dp),
+                                color = Color(0xFFF5F5F5),
+                                modifier = Modifier.height(32.dp)
+                            ) {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier.padding(horizontal = 12.dp)
+                                ) {
+                                    Text(
+                                        text = "#$tag",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color.Gray
+                                    )
+                                }
                             }
                         }
                     }
-                }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
-                // Descripción
-                Text(
-                    text = "Sobre esta ruta",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = ruta.descripcion,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = Color.DarkGray,
-                    lineHeight = MaterialTheme.typography.bodyLarge.lineHeight * 1.4
-                )
+                    // Descripción
+                    Text(
+                        text = "Sobre esta ruta",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = ruta.descripcion,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Color.DarkGray,
+                        lineHeight = MaterialTheme.typography.bodyLarge.lineHeight * 1.4
+                    )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
-                // --- 3. SECCIÓN MAPA ---
-                Text(
-                    text = "Ubicación",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(12.dp))
+                    // --- 3. SECCIÓN MAPA ---
+                    Text(
+                        text = "Ubicación",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(250.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(Color.LightGray),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (showMap) {
-                        // A: EL MAPA (Solo carga después de los 700ms)
-                        MapViewContainer(
-                            rutas = listOf(ruta),
-                            onMarkerClick = {},
-                            liteMode = true // <--- ¡ESTO SALVARÁ EL RENDIMIENTO!
-                        )
-                    } else {
-                        // B: LOADER (Se muestra mientras "descansa" la CPU)
-                        // Loader simple
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            color = Color.Gray
-                        )
-
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(250.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(Color.LightGray),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (showMap) {
+                            MapViewContainer(
+                                rutas = listOf(ruta),
+                                onMarkerClick = {},
+                                liteMode = true
+                            )
+                        } else {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = Color.Gray
+                            )
+                        }
                     }
+
+                    Spacer(modifier = Modifier.height(80.dp))
                 }
-
-                Spacer(modifier = Modifier.height(32.dp))
             }
-        }
 
-        // Botón Atrás
-        IconButton(
-            onClick = onBack,
-            modifier = Modifier
-                .padding(16.dp)
-                .align(Alignment.TopStart)
-                .background(Color.White.copy(alpha = 0.9f), CircleShape)
-        ) {
-            Icon(
-                Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Atrás",
-                tint = Color.Black
-            )
+            IconButton(
+                onClick = onBack,
+                modifier = Modifier
+                    .padding(16.dp)
+                    .align(Alignment.TopStart)
+                    .background(Color.White.copy(alpha = 0.9f), CircleShape)
+            ) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Atrás",
+                    tint = Color.Black
+                )
+            }
         }
     }
 }

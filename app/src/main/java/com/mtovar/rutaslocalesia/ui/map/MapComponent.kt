@@ -9,6 +9,8 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapProperties
+import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
@@ -47,7 +49,16 @@ fun MapViewContainer(rutas: List<Ruta>,
         // ESTA ES LA CLAVE PARA EL RENDIMIENTO:
         googleMapOptionsFactory = {
             GoogleMapOptions().liteMode(liteMode)
-        }
+        },
+        properties = MapProperties(
+            isMyLocationEnabled = false // Ponlo en 'true' SOLO si ya pediste permisos.
+            // Si lo pones en true sin permisos, la app crasheará.
+            // Para este sprint, dejémoslo en false o implementa un PermissionLauncher.
+        ),
+        uiSettings = MapUiSettings(
+            myLocationButtonEnabled = false, // Botón para centrar en mi
+            zoomControlsEnabled = false
+        )
     ) {
         rutas.forEach { ruta ->
             // 1. MARCADOR PRINCIPAL (ROJO)

@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/eco_green_primary</item>
 
+        <item name="windowSplashScreenAnimatedIcon">@drawable/avd_splash_eco_entry</item>
+        <item name="windowSplashScreenAnimationDuration">600</item>
+        <item name="postSplashScreenTheme">@style/Theme.Rutaslocalesia</item>
+    </style>
     <style name="Theme.Rutaslocalesia" parent="android:Theme.Material.Light.NoActionBar" />
 </resources>

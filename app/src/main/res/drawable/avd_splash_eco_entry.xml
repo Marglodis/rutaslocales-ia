@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+
+    <aapt:attr name="android:drawable">
+        <vector
+            android:width="108dp"
+            android:height="108dp"
+            android:viewportWidth="24"
+            android:viewportHeight="24">
+            <group
+                android:name="hoja_group"
+                android:pivotX="12"
+                android:pivotY="12"
+                android:scaleX="0"
+                android:scaleY="0"
+                android:alpha="0">
+                <path
+                    android:fillColor="#FFFFFF"
+                    android:pathData="M17,8C8,10 5.9,16.17 3.82,21.34L5.71,22L6.66,19.7C7.14,19.87 7.64,20 8,20C19,20 22,3 22,3C21,5 14,5.25 9,6.25C4,7.25 2,11.5 2,13.5C2,15.5 3.75,17.25 3.75,17.25C7,8 17,8 17,8Z"/>
+            </group>
+        </vector>
+    </aapt:attr>
+
+    <target android:name="hoja_group">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator
+                    android:propertyName="scaleX"
+                    android:duration="600"
+                    android:valueFrom="0.0"
+                    android:valueTo="0.6"
+                    android:valueType="floatType"
+                    android:interpolator="@android:interpolator/fast_out_slow_in"/>
+                <objectAnimator
+                    android:propertyName="scaleY"
+                    android:duration="600"
+                    android:valueFrom="0.0"
+                    android:valueTo="0.6"
+                    android:valueType="floatType"
+                    android:interpolator="@android:interpolator/fast_out_slow_in"/>
+            </set>
+        </aapt:attr>
+    </target>
+
+    <target android:name="hoja_group">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:propertyName="alpha"
+                android:duration="600"
+                android:valueFrom="0.0"
+                android:valueTo="1.0"
+                android:valueType="floatType"/>
+        </aapt:attr>
+    </target>
+</animated-vector>

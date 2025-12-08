@@ -133,7 +133,7 @@ fun ChatScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Filled.Eco, contentDescription = null, tint = Color.White)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Eco IA", color = Color.White, style = MaterialTheme.typography.titleLarge)
+                        Text("Rutas Locales IA", color = Color.White, style = MaterialTheme.typography.titleLarge)
                     }
 
                     // BOTÓN CORAZÓN (NUEVO)

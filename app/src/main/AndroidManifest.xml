@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <application
         android:name=".RutasApp"
         android:allowBackup="true"
@@ -20,7 +22,7 @@
             android:exported="true"
             android:windowSoftInputMode="adjustResize"
             android:label="@string/app_name"
-            android:theme="@style/Theme.Rutaslocalesia">
+            android:theme="@style/Theme.App.Starting">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
