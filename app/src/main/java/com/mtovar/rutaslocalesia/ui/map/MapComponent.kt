@@ -20,7 +20,8 @@ import com.mtovar.rutaslocalesia.model.Ruta
 fun MapViewContainer(rutas: List<Ruta>,
                      onMarkerClick: (Ruta) -> Unit,
                      modifier: Modifier = Modifier,
-                     liteMode: Boolean = false
+                     liteMode: Boolean = false,
+                     isLocationEnabled: Boolean = false
                      ) {
     // Si no hay rutas, centramos en un punto default (ej: Santiago de Chile)
     // En una app real, se usaría la ubicación del usuario.
@@ -46,18 +47,15 @@ fun MapViewContainer(rutas: List<Ruta>,
     GoogleMap(
         modifier = modifier.fillMaxSize(),
         cameraPositionState = cameraPositionState,
-        // ESTA ES LA CLAVE PARA EL RENDIMIENTO:
         googleMapOptionsFactory = {
             GoogleMapOptions().liteMode(liteMode)
         },
         properties = MapProperties(
-            isMyLocationEnabled = false // Ponlo en 'true' SOLO si ya pediste permisos.
-            // Si lo pones en true sin permisos, la app crasheará.
-            // Para este sprint, dejémoslo en false o implementa un PermissionLauncher.
+            isMyLocationEnabled = isLocationEnabled
         ),
         uiSettings = MapUiSettings(
             myLocationButtonEnabled = false, // Botón para centrar en mi
-            zoomControlsEnabled = false
+            zoomControlsEnabled = true
         )
     ) {
         rutas.forEach { ruta ->

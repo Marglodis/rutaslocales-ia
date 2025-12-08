@@ -7,6 +7,7 @@ import com.mtovar.rutaslocalesia.model.Ruta
 @Entity(tableName = "rutas_favoritas")
 data class RutaFavorita(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val userId: String,
     val nombre: String,
     val descripcion: String,
     val latitud: Double,
@@ -14,7 +15,8 @@ data class RutaFavorita(
     val fechaGuardado: Long = System.currentTimeMillis()
 )
 // Una función de extensión para convertir fácilmente de tu modelo API a tu modelo DB
-fun Ruta.toEntity() = RutaFavorita(
+fun Ruta.toEntity(userId: String) = RutaFavorita(
+    userId = userId,
     nombre = this.nombre,
     descripcion = this.descripcion,
     latitud = this.latitud,
@@ -28,8 +30,6 @@ fun RutaFavorita.toRuta(): Ruta {
         descripcion = this.descripcion,
         latitud = this.latitud,
         longitud = this.longitud,
-        // Si el objeto Ruta tiene campos extra que se guardó (como rating),
-        // se da un valor por defecto aquí:
         dificultad = "Guardada",
         duracion = "-",
         rating = 5.0,

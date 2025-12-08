@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.mtovar.rutaslocalesia" />
+                  <option name="mobileSdkAppId" value="1:963045731472:android:87511fcb673cfa4e6c7c15" />
+                  <option name="projectId" value="rutaslocalesia" />
+                  <option name="projectNumber" value="963045731472" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

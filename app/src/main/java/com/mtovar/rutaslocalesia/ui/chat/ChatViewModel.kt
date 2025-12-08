@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.ai.client.generativeai.GenerativeModel
+import com.google.firebase.auth.FirebaseAuth
 import com.mtovar.rutaslocalesia.data.local.RutasDao
 import com.mtovar.rutaslocalesia.model.ChatMessage
 import com.mtovar.rutaslocalesia.model.RespuestaRutas
@@ -11,31 +12,41 @@ import com.mtovar.rutaslocalesia.model.Ruta
 import com.mtovar.rutaslocalesia.model.entity.toEntity
 import com.mtovar.rutaslocalesia.model.entity.toRuta
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import javax.inject.Inject
-import kotlin.collections.emptyList
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
     private val generativeModel: GenerativeModel,
-    private val rutasDao: RutasDao
+    private val rutasDao: RutasDao,
+    private val auth: FirebaseAuth
 ) : ViewModel() {
-    // 1. Convertimos la lista de la DB a lista de objetos UI en tiempo real
-    val misFavoritos = rutasDao.obtenerTodas()
-        .map { listaFavoritas ->
-            listaFavoritas.map { it.toRuta() }
+    // Controlamos quién es el usuario actual
+    private val _currentUserId = MutableStateFlow(auth.currentUser?.uid)
+
+    // Si _currentUserId cambia, la consulta a la DB cambia sola
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val misFavoritos = _currentUserId.flatMapLatest { userId ->
+        if (userId != null) {
+            rutasDao.obtenerTodas(userId).map { list -> list.map { it.toRuta() } }
+        } else {
+            flowOf(emptyList()) // Si no hay usuario, lista vacía
         }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
+
     private val _rutasEncontradas = MutableStateFlow<List<Ruta>>(emptyList())
     val rutasEncontradas = _rutasEncontradas.asStateFlow()
 
@@ -139,20 +150,24 @@ class ChatViewModel @Inject constructor(
                 // --- MANEJO DE ERRORES PERSONALIZADO PARA ECO ---
                 val errorMsg = e.localizedMessage ?: ""
 
-                val ecoMessage = if (errorMsg.contains("quota", ignoreCase = true) || errorMsg.contains("429")) {
-                    // Confirmamos en el log que entramos aquí
-                    Log.d("GEMINI_DEBUG", "✅ Detectado error de CUOTA (Rate Limit)")
-                    // Error de Rate Limit (Plan gratuito)
-                    "¡Uf! He caminado muy rápido y necesito recuperar el aliento. 😰\n\nDame unos segundos para descansar antes de seguir explorando rutas contigo. ⏱️🌿"
-                } else if (errorMsg.contains("network") || errorMsg.contains("timeout") || errorMsg.contains("host")) {
-                    Log.d("GEMINI_DEBUG", "✅ Detectado error de CONEXIÓN")
-                    // Error de Internet
-                    "Parece que perdimos la señal del sendero. Revisa tu conexión a internet. 📶❌"
-                } else {
-                    Log.d("GEMINI_DEBUG", "⚠️ Error desconocido: $errorMsg")
-                    // Error genérico
-                    "Lo siento, me he tropezado con una piedra desconocida. Intenta de nuevo. (Error técnico: $errorMsg)"
-                }
+                val ecoMessage =
+                    if (errorMsg.contains("quota", ignoreCase = true) || errorMsg.contains("429")) {
+                        // Confirmamos en el log que entramos aquí
+                        Log.d("GEMINI_DEBUG", "✅ Detectado error de CUOTA (Rate Limit)")
+                        // Error de Rate Limit (Plan gratuito)
+                        "¡Uf! He caminado muy rápido y necesito recuperar el aliento. 😰\n\nDame unos segundos para descansar antes de seguir explorando rutas contigo. ⏱️🌿"
+                    } else if (errorMsg.contains("network") || errorMsg.contains("timeout") || errorMsg.contains(
+                            "host"
+                        )
+                    ) {
+                        Log.d("GEMINI_DEBUG", "✅ Detectado error de CONEXIÓN")
+                        // Error de Internet
+                        "Parece que perdimos la señal del sendero. Revisa tu conexión a internet. 📶❌"
+                    } else {
+                        Log.d("GEMINI_DEBUG", "⚠️ Error desconocido: $errorMsg")
+                        // Error genérico
+                        "Lo siento, me he tropezado con una piedra desconocida. Intenta de nuevo. (Error técnico: $errorMsg)"
+                    }
 
                 val errorList = _messages.value.toMutableList()
                 errorList.add(ChatMessage(text = ecoMessage, isUser = false))
@@ -165,16 +180,20 @@ class ChatViewModel @Inject constructor(
     }
 
     fun guardarRutaFavorita(ruta: Ruta) {
+        val uid = auth.currentUser?.uid ?: return // Seguridad
         viewModelScope.launch {
-            try {
-                rutasDao.guardarRuta(ruta.toEntity())
-                // Feedback visual en el chat (usando la lista mutable para seguridad)
-                val confirmList = _messages.value.toMutableList()
-                confirmList.add(ChatMessage(text = "¡Ruta '${ruta.nombre}' guardada en favoritos! ⭐", isUser = false))
-                _messages.value = confirmList
-            } catch (e: Exception) {
-                // Manejo de error al guardar (opcional)
-            }
+            rutasDao.guardarRuta(ruta.toEntity(uid))
+            // Feedback en el chat (opcional)
+            val currentList = _messages.value.toMutableList()
+            currentList.add(ChatMessage(text = "¡Guardada en tus favoritos! ⭐", isUser = false))
+            _messages.value = currentList
+        }
+    }
+
+    fun eliminarRutaFavorita(ruta: Ruta) {
+        val uid = auth.currentUser?.uid ?: return
+        viewModelScope.launch {
+            rutasDao.eliminarPorNombre(ruta.nombre, uid)
         }
     }
 
@@ -191,10 +210,16 @@ class ChatViewModel @Inject constructor(
         return "{}"
     }
 
-    fun eliminarRutaFavorita(ruta: Ruta) {
-        viewModelScope.launch {
-            rutasDao.eliminarPorNombre(ruta.nombre)
-            // Como usamos Flow, la lista se actualizará sola en la UI
-        }
+    fun logout() {
+        auth.signOut()
+        // Limpieza de datos visuales
+        _currentUserId.value = null
+        _messages.value = listOf(ChatMessage(text = "¡Hola de nuevo! 🌿...", isUser = false))
+        _rutasEncontradas.value = emptyList()
+    }
+
+    // REFRESH: Llamar al entrar al chat para asegurar que tenemos el ID
+    fun refreshUser() {
+        _currentUserId.value = auth.currentUser?.uid
     }
 }
