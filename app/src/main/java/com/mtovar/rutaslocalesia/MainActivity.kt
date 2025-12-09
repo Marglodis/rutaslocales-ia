@@ -29,13 +29,17 @@ class MainActivity : ComponentActivity() {
         setContent {
             RutaslocalesiaTheme()  {
                 // ESTADO REACTIVO: Escucha directamente a Firebase
-                var isUserLoggedIn by remember { mutableStateOf(auth.currentUser != null) }
+                var isUserLoggedIn by remember {
+                    mutableStateOf(auth.currentUser != null && auth.currentUser?.isEmailVerified == true)
+                }
 
                 // EFECTO: Se suscribe a los cambios de sesión (Login/Logout)
                 DisposableEffect(auth) {
                     val listener = FirebaseAuth.AuthStateListener { firebaseAuth ->
-                        // Si currentUser no es nulo, es true. Si es nulo, false.
-                        isUserLoggedIn = firebaseAuth.currentUser != null
+                        val user = firebaseAuth.currentUser
+                        // Solo dejamos pasar si hay usuario Y además su correo está verificado.
+                        // Al registrarse, isEmailVerified es FALSE, así que isUserLoggedIn se mantiene FALSE.
+                        isUserLoggedIn = user != null && user.isEmailVerified
                     }
                     auth.addAuthStateListener(listener)
 

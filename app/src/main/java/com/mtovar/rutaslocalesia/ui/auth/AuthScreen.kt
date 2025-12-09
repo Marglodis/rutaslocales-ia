@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -28,7 +29,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -58,22 +58,25 @@ fun AuthScreen(
 ) {
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.authError.collectAsState()
+    val message by viewModel.authMessage.collectAsState()
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isRegisterMode by remember { mutableStateOf(false) }
     var passwordVisible by remember { mutableStateOf(false) }
 
+    // Estado para mostrar/ocultar el diálogo de recuperación
+    var showForgotDialog by remember { mutableStateOf(false) }
+
     // CONTENEDOR PRINCIPAL CON DEGRADADO
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(
-                // Degradado vertical: De verde muy suave a blanco puro
                 Brush.verticalGradient(
                     colors = listOf(GreenLight, Color.White),
                     startY = 0f,
-                    endY = 1500f // Ajusta según la pantalla
+                    endY = 1500f
                 )
             )
     ) {
@@ -84,12 +87,28 @@ fun AuthScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            // MENSAJE DE ÉXITO (VERDE)
+            if (message != null) {
+                Surface(
+                    color = Color(0xFFE8F5E9),
+                    shape = MaterialTheme.shapes.small,
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                ) {
+                    Text(
+                        text = message!!,
+                        color = Color(0xFF1B5E20),
+                        modifier = Modifier.padding(16.dp),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+
             // LOGO
             Icon(
                 painter = painterResource(id = R.drawable.ic_launcher_foreground),
                 contentDescription = null,
                 modifier = Modifier.size(110.dp),
-                tint = GreenPrimary // El logo resalta con el color principal
+                tint = GreenPrimary
             )
 
             // TÍTULO
@@ -100,7 +119,7 @@ fun AuthScreen(
                 color = GreenDark
             )
 
-            // Subtítulo pequeño decorativo
+            // Subtítulo
             Text(
                 text = "Tu guía de naturaleza inteligente 🌿",
                 style = MaterialTheme.typography.bodyMedium,
@@ -167,25 +186,48 @@ fun AuthScreen(
                 )
             )
 
-            // MENSAJE DE ERROR
+            // --- NUEVO: BOTÓN OLVIDÉ CONTRASEÑA (Solo en Login) ---
+            if (!isRegisterMode) {
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
+                    TextButton(onClick = { showForgotDialog = true }) {
+                        Text(
+                            text = "¿Olvidaste tu contraseña?",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = GreenDark
+                        )
+                    }
+                }
+            } else {
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            // MENSAJE DE ERROR (ROJO)
             if (error != null) {
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 Surface(
-                    color = Color(0xFFFFEBEE), // Fondo rojo muy suave
+                    color = Color(0xFFFFEBEE),
                     shape = MaterialTheme.shapes.small,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        text = error!!,
-                        color = Color(0xFFC62828), // Rojo oscuro
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(8.dp),
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                    )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = error!!,
+                            color = Color(0xFFC62828),
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(8.dp),
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                        // Botón reenviar si es error de verificación
+                        if (error!!.contains("verificar", ignoreCase = true)) {
+                            TextButton(onClick = { viewModel.resendVerification() }) {
+                                Text("Reenviar correo de verificación", fontSize = androidx.compose.ui.unit.TextUnit.Unspecified)
+                            }
+                        }
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             // BOTÓN PRINCIPAL
             Button(
@@ -235,5 +277,62 @@ fun AuthScreen(
                 )
             }
         }
+
+        // --- LÓGICA DEL DIÁLOGO ---
+        if (showForgotDialog) {
+            ForgotPasswordDialog(
+                onDismiss = { showForgotDialog = false },
+                onConfirm = { emailRecuperacion ->
+                    viewModel.sendRecoveryEmail(emailRecuperacion)
+                    showForgotDialog = false
+                }
+            )
+        }
     }
+}
+
+// --- COMPONENTE DEL DIÁLOGO (Al final del archivo) ---
+@Composable
+fun ForgotPasswordDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit
+) {
+    var email by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = "Recuperar Contraseña", style = MaterialTheme.typography.titleMedium, color = GreenDark) },
+        text = {
+            Column {
+                Text("Ingresa tu correo y te enviaremos un enlace para crear una nueva clave.", style = MaterialTheme.typography.bodyMedium)
+                Spacer(modifier = Modifier.height(16.dp))
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = { Text("Correo electrónico") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = GreenPrimary,
+                        focusedLabelColor = GreenPrimary,
+                        cursorColor = GreenPrimary
+                    )
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onConfirm(email) },
+                enabled = email.isNotBlank()
+            ) {
+                Text("Enviar", color = GreenPrimary, fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar", color = Color.Gray)
+            }
+        },
+        containerColor = Color.White
+    )
 }
