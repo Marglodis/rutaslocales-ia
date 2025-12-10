@@ -1,20 +1,68 @@
 # 🌿 Rutas Locales IA (Eco)
 
-Bienvenido al código fuente de **Rutas Locales IA ("Eco")**, un asistente de senderismo inteligente desarrollado en Android Nativo.
+![Android](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)
+![Kotlin](https://img.shields.io/badge/Kotlin-0095D5?style=for-the-badge&logo=kotlin&logoColor=white)
+![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-4285F4?style=for-the-badge&logo=android&logoColor=white)
+![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)
+![Gemini AI](https://img.shields.io/badge/Gemini%20AI-8E75B2?style=for-the-badge&logo=google&logoColor=white)
 
-Esta aplicación combina la potencia de la **IA Generativa (Gemini)** con **Google Maps** para ofrecer recomendaciones de rutas personalizadas mediante una interfaz conversacional.
+Bienvenido al repositorio de **Rutas Locales IA ("Eco")**, un asistente de senderismo inteligente desarrollado en Android Nativo.
+
+Esta aplicación revoluciona la búsqueda de rutas naturales combinando la potencia de la **IA Generativa (Google Gemini)** con la precisión de **Google Maps**. Olvídate de los filtros técnicos complejos; simplemente dile a Eco lo que buscas y él encontrará la aventura perfecta para ti.
 
 ---
 
-## 📋 Requisitos Previos
+## 📱 Galería de la Aplicación
 
-Para ejecutar este proyecto necesitas:
+### 🔐 Autenticación Segura
+Flujo completo con registro, validación de correo y recuperación de contraseña.
 
-1.  **Android Studio** (Versión Hedgehog o superior recomendada).
-2.  **JDK 17** o superior (generalmente incluido en Android Studio).
-3.  **Dos API Keys** activas de Google Cloud:
-    * **Google Maps SDK for Android**
-    * **Google Gemini API** (AI Studio)
+|                  Splash & Bienvenida                   | Inicio de Sesión | Registro & Validación | Recuperación Clave |
+|:------------------------------------------------------:|:---:|:---:|:---:|
+| <img src="screenshots/Screenshot_68.png" width="200"/> | <img src="screenshots/Screenshot_69.png" width="200"/> | <img src="screenshots/Screenshot_72.png" width="200"/> | <img src="screenshots/Screenshot_91.png" width="200"/> |
+
+### 🤖 Chat IA & Mapas Interactivos
+Interacción conversacional natural y visualización geográfica inmediata.
+
+| Chat con Eco | Resultados en Mapa | Detalle de Ruta | Favoritos |
+|:---:|:---:|:---:|:---:|
+| <img src="screenshots/Screenshot_75.png" width="200"/> | <img src="screenshots/Screenshot_82.jpg" width="200"/> | <img src="screenshots/Screenshot_79.png" width="200"/> | <img src="screenshots/Screenshot_83.png" width="200"/> |
+
+### 🧭 Navegación y Permisos
+Integración nativa con Google Maps Navigation y gestión responsable de permisos.
+
+| Solicitud Permisos | Navegación GPS |
+|:---:|:---:|
+| <img src="screenshots/Screenshot_89.png" width="200"/> | <img src="screenshots/Screenshot_90.jpg" width="200"/> |
+
+---
+
+## ✨ Funcionalidades Clave
+
+* **💬 Asistente Conversacional:** Integración con **Gemini API** para entender lenguaje natural (ej: *"Quiero una ruta tranquila para ir con mi perro"*).
+* **🗺️ Mapas Dinámicos:** Visualización de rutas con **Google Maps SDK** y marcadores interactivos.
+* **🔐 Seguridad Robusta:** Implementación de **Firebase Auth** con verificación de email obligatoria.
+* **❤️ Favoritos Offline:** Persistencia de datos locales con **Room Database**, segregada por usuario.
+* **🎨 UI Moderna:** Interfaz construida 100% con **Jetpack Compose** y Material Design 3.
+
+---
+
+## 🛠️ Stack Tecnológico (MAD)
+
+La aplicación sigue los estándares de **Modern Android Development**:
+
+| Capa | Tecnología |
+| :--- | :--- |
+| **Lenguaje** | Kotlin |
+| **UI Framework** | Jetpack Compose (Material 3) |
+| **Arquitectura** | MVVM + Clean Architecture |
+| **Inyección Dep.** | Dagger Hilt |
+| **IA & LLM** | Google Gemini API (Generative AI) |
+| **Mapas** | Google Maps SDK for Android |
+| **Backend/Auth** | Firebase Authentication |
+| **Base de Datos** | Room (SQLite) |
+| **Red & Async** | Retrofit, Coroutines & Flow |
+| **Imágenes** | Coil |
 
 ---
 
