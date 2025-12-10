@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.firebase.auth.FirebaseAuth
+import com.mtovar.rutaslocalesia.BuildConfig
 import com.mtovar.rutaslocalesia.data.local.RutasDao
 import com.mtovar.rutaslocalesia.model.ChatMessage
 import com.mtovar.rutaslocalesia.model.RespuestaRutas
@@ -21,6 +22,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import javax.inject.Inject
 
@@ -74,6 +76,21 @@ class ChatViewModel @Inject constructor(
     }
 
     fun sendMessage(userText: String) {
+        // 1. VALIDACIÓN PREVENTIVA DE API KEY
+        // Verificamos si la clave es nula, está vacía o es la por defecto
+        val apiKey = BuildConfig.GEMINI_API_KEY
+        if (apiKey.isNullOrBlank() || apiKey == "null" || apiKey.contains("TU_CLAVE")) {
+            val errorList = _messages.value.toMutableList()
+            errorList.add(ChatMessage(text = userText, isUser = true))
+            errorList.add(
+                ChatMessage(
+                    text = "⚠️ **Error de Configuración:**\n\nNo se detectó una API Key válida. Por favor, configura tu clave de Gemini en el archivo local.properties y recompila la app.",
+                    isUser = false
+                )
+            )
+            _messages.value = errorList
+            return
+        }
         viewModelScope.launch {
             // Agregar mensaje de usuario a la lista de forma segura
             val currentList = _messages.value.toMutableList()
@@ -150,24 +167,27 @@ class ChatViewModel @Inject constructor(
                 // --- MANEJO DE ERRORES PERSONALIZADO PARA ECO ---
                 val errorMsg = e.localizedMessage ?: ""
 
-                val ecoMessage =
-                    if (errorMsg.contains("quota", ignoreCase = true) || errorMsg.contains("429")) {
-                        // Confirmamos en el log que entramos aquí
-                        Log.d("GEMINI_DEBUG", "✅ Detectado error de CUOTA (Rate Limit)")
-                        // Error de Rate Limit (Plan gratuito)
-                        "¡Uf! He caminado muy rápido y necesito recuperar el aliento. 😰\n\nDame unos segundos para descansar antes de seguir explorando rutas contigo. ⏱️🌿"
-                    } else if (errorMsg.contains("network") || errorMsg.contains("timeout") || errorMsg.contains(
-                            "host"
-                        )
-                    ) {
-                        Log.d("GEMINI_DEBUG", "✅ Detectado error de CONEXIÓN")
-                        // Error de Internet
-                        "Parece que perdimos la señal del sendero. Revisa tu conexión a internet. 📶❌"
-                    } else {
-                        Log.d("GEMINI_DEBUG", "⚠️ Error desconocido: $errorMsg")
-                        // Error genérico
-                        "Lo siento, me he tropezado con una piedra desconocida. Intenta de nuevo. (Error técnico: $errorMsg)"
+                // MENSAJES DE ERROR AMIGABLES
+                val ecoMessage = when {
+                    // 1. Error de API Key o Permisos (El que te salió en la foto)
+                    errorMsg.contains("403") || errorMsg.contains("API key") || errorMsg.contains("Method doesn't allow") -> {
+                        "🔒 **Problema de Acceso:**\nParece que la llave de seguridad (API Key) no es válida o ha sido eliminada. Revisa la configuración del proyecto."
                     }
+                    // 2. Error de Serialización
+                    e is SerializationException || errorMsg.contains("MissingFieldException") -> {
+                        "🧩 **Error de Datos:**\nRecibí una respuesta inesperada del servidor. Posiblemente la API Key falta o el servicio está enviando un formato de error desconocido."
+                    }
+                    // 3. Cuota excedida
+                    errorMsg.contains("429") || errorMsg.contains("quota") -> {
+                        "¡Uf! He caminado muy rápido y necesito recuperar el aliento. 😰\n\nDame unos segundos para descansar."
+                    }
+                    // 4. Sin internet
+                    errorMsg.contains("network") || errorMsg.contains("host") -> {
+                        "Parece que perdimos la señal del sendero. Revisa tu conexión a internet. 📶❌"
+                    }
+                    // 5. Genérico
+                    else -> "Lo siento, me he tropezado con una piedra desconocida. (Error: $errorMsg)"
+                }
 
                 val errorList = _messages.value.toMutableList()
                 errorList.add(ChatMessage(text = ecoMessage, isUser = false))
