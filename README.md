@@ -11,6 +11,10 @@ Bienvenido al repositorio de **Rutas Locales IA ("Eco")**, un asistente de sende
 Esta aplicación revoluciona la búsqueda de rutas naturales combinando la potencia de la **IA Generativa (Google Gemini)** con la precisión de **Google Maps**. Olvídate de los filtros técnicos complejos; simplemente dile a Eco lo que buscas y él encontrará la aventura perfecta para ti.
 
 ---
+<p align="center">
+  <img src="screenshots/rutas-locales-overview.png" alt="Arquitectura y Funcionalidades de Rutas Locales" width="100%">
+</p>
+---
 
 ## 📱 Galería de la Aplicación
 
