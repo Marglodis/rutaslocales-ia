@@ -169,23 +169,34 @@ class ChatViewModel @Inject constructor(
 
                 // MENSAJES DE ERROR AMIGABLES
                 val ecoMessage = when {
-                    // 1. Error de API Key o Permisos (El que te salió en la foto)
-                    errorMsg.contains("403") || errorMsg.contains("API key") || errorMsg.contains("Method doesn't allow") -> {
-                        "🔒 **Problema de Acceso:**\nParece que la llave de seguridad (API Key) no es válida o ha sido eliminada. Revisa la configuración del proyecto."
+                    // 1. Error de API Key (403)
+                    errorMsg.contains("403") || errorMsg.contains("API key") -> {
+                        "🔒 **Problema de Acceso:**\nLa llave de seguridad (API Key) no es válida o falta. Revisa tu configuración."
                     }
-                    // 2. Error de Serialización
-                    e is SerializationException || errorMsg.contains("MissingFieldException") -> {
-                        "🧩 **Error de Datos:**\nRecibí una respuesta inesperada del servidor. Posiblemente la API Key falta o el servicio está enviando un formato de error desconocido."
+
+                    // 2. NUEVO: Servidor Saturado (503)
+                    // Detectamos si el mensaje menciona "503" o "overloaded"
+                    errorMsg.contains("503") || errorMsg.contains("overloaded", ignoreCase = true) -> {
+                        "🐌 **Tráfico Intenso:**\nLos servidores de IA están muy solicitados en este momento (Error 503). Por favor, espera unos segundos e inténtalo de nuevo."
                     }
-                    // 3. Cuota excedida
+
+                    // 3. Cuota excedida (429)
                     errorMsg.contains("429") || errorMsg.contains("quota") -> {
                         "¡Uf! He caminado muy rápido y necesito recuperar el aliento. 😰\n\nDame unos segundos para descansar."
                     }
-                    // 4. Sin internet
+
+                    // 4. Error de Serialización (El crash técnico)
+                    // Si cae aquí, es porque el servidor mandó algo raro que no es 503 explícito
+                    e is SerializationException || errorMsg.contains("MissingFieldException") -> {
+                        "🧩 **Error de Conexión:**\nRecibí una respuesta inesperada del servidor. Intenta de nuevo."
+                    }
+
+                    // 5. Sin internet
                     errorMsg.contains("network") || errorMsg.contains("host") -> {
                         "Parece que perdimos la señal del sendero. Revisa tu conexión a internet. 📶❌"
                     }
-                    // 5. Genérico
+
+                    // 6. Genérico
                     else -> "Lo siento, me he tropezado con una piedra desconocida. (Error: $errorMsg)"
                 }
 
