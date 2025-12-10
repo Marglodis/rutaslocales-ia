@@ -24,16 +24,16 @@ Flujo completo con registro, validación de correo y recuperación de contraseñ
 ### 🤖 Chat IA & Mapas Interactivos
 Interacción conversacional natural y visualización geográfica inmediata.
 
-| Chat con Eco | Resultados en Mapa | Detalle de Ruta | Favoritos |
-|:---:|:---:|:---:|:---:|
-| <img src="screenshots/Screenshot_75.png" width="200"/> | <img src="screenshots/Screenshot_82.jpg" width="200"/> | <img src="screenshots/Screenshot_79.png" width="200"/> | <img src="screenshots/Screenshot_83.png" width="200"/> |
+| Chat con Eco |                   Resultados en Mapa                   | Detalle de Ruta | Favoritos |
+|:---:|:------------------------------------------------------:|:---:|:---:|
+| <img src="screenshots/Screenshot_75.png" width="200"/> | <img src="screenshots/Screenshot_82.png" width="200"/> | <img src="screenshots/Screenshot_79.png" width="200"/> | <img src="screenshots/Screenshot_83.png" width="200"/> |
 
 ### 🧭 Navegación y Permisos
 Integración nativa con Google Maps Navigation y gestión responsable de permisos.
 
-| Solicitud Permisos | Navegación GPS |
-|:---:|:---:|
-| <img src="screenshots/Screenshot_89.png" width="200"/> | <img src="screenshots/Screenshot_90.jpg" width="200"/> |
+| Solicitud Permisos |                     Navegación GPS                     |
+|:---:|:------------------------------------------------------:|
+| <img src="screenshots/Screenshot_89.png" width="200"/> | <img src="screenshots/Screenshot_90.png" width="200"/> |
 
 ---
 
