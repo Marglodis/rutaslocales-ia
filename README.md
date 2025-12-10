@@ -35,6 +35,15 @@ Integración nativa con Google Maps Navigation y gestión responsable de permiso
 |:---:|:------------------------------------------------------:|
 | <img src="screenshots/Screenshot_89.png" width="200"/> | <img src="screenshots/Screenshot_90.png" width="200"/> |
 
+--- 
+## 📺 Video Demo
+
+¿Quieres ver a Eco en acción? Mira la demostración completa de la app funcionando:
+
+[![Ver Video en YouTube](https://img.youtube.com/vi/qGHPTm6cKLs/0.jpg)](https://youtu.be/qGHPTm6cKLs)
+
+*(Haz clic en la imagen para ver el video)*
+
 ---
 
 ## ✨ Funcionalidades Clave
